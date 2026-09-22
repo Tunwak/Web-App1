@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการสินค้า — Northwind Product Management</title>
+    <meta name="description" content="ระบบจัดการสินค้า CRUD — ค้นหา เพิ่ม แก้ไข ลบ ข้อมูลสินค้าจากฐานข้อมูล Northwind">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts: IBM Plex Sans Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ═══════════════════ Navbar ═══════════════════ -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3 mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center fw-bold fs-4" href="#">
+                <i class="bi bi-box-seam-fill me-2 fs-3 text-warning"></i>
+                ระบบจัดการสินค้า
+            </a>
+            <span class="badge bg-light text-dark px-3 py-2 rounded-pill fw-normal">
+                <i class="bi bi-hdd-network me-1 text-primary"></i>
+                Northwind Database (tb_products)
+            </span>
+        </div>
+    </nav>
+
+    <!-- ═══════════════════ Toast Container ═══════════════════ -->
+    <div id="toastContainer" class="toast-container-custom"></div>
+
+    <div class="container pb-5">
+
+        <!-- ═══════════════════ SECTION 1: ตารางสินค้า ═══════════════════ -->
+        <div class="card card-main mb-4">
+            <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-table me-2"></i>รายการสินค้า
+                        <span class="badge bg-light text-primary ms-2 fw-medium" id="productCount">0</span>
+                    </h5>
+                </div>
+                <!-- Search -->
+                <div class="search-box">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-primary"></i>
+                        </span>
+                        <input type="text"
+                               class="form-control border-start-0"
+                               id="searchInput"
+                               placeholder="ค้นหาชื่อสินค้า หมวดหมู่ หรือผู้จำหน่าย..."
+                               autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-products table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width:70px">ID</th>
+                                <th>ชื่อสินค้า</th>
+                                <th>หมวดหมู่</th>
+                                <th>ผู้จำหน่าย</th>
+                                <th>หน่วยนับ</th>
+                                <th class="text-end" style="width:130px">ราคา (฿)</th>
+                                <th class="text-center" style="width:120px">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTableBody">
+                            <!-- JS will render rows here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state d-none">
+                    <i class="bi bi-inbox d-block"></i>
+                    <p class="mb-0">ไม่พบข้อมูลสินค้า</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ SECTION 2: ฟอร์มเพิ่ม/แก้ไขสินค้า ═══════════════════ -->
+        <div id="formSection" class="card card-main">
+            <div class="card-header-success d-flex align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-plus-circle me-2"></i>เพิ่ม / แก้ไขข้อมูลสินค้า
+                </h5>
+            </div>
+
+            <div class="card-body p-4">
+
+                <!-- Update Status Banner -->
+                <div id="updateStatusBanner" class="alert alert-warning d-none d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-pencil-square me-2 fs-5"></i>
+                        <span>กำลังแก้ไขสินค้ารหัส <strong id="currentProductIdDisplay"></strong></span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCancelEdit">
+                        <i class="bi bi-x-lg me-1"></i>ยกเลิกการแก้ไข
+                    </button>
+                </div>
+
+                <!-- Server Error Alert -->
+                <div id="serverErrorAlert" class="alert alert-danger d-none">
+                    <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-1"></i>ข้อมูลไม่ผ่านการตรวจสอบ</h6>
+                    <ul id="serverErrorList" class="mb-0 ps-3"></ul>
+                </div>
+
+                <form id="productForm" novalidate>
+                    <!-- Hidden fields -->
+                    <input type="hidden" id="productId" value="">
+                    <input type="hidden" id="formAction" value="insert">
+
+                    <div class="row g-3">
+                        <!-- ชื่อสินค้า -->
+                        <div class="col-md-6">
+                            <label for="productName" class="form-label">ชื่อสินค้า (Product Name) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
+                                <input type="text" class="form-control" id="productName"
+                                       placeholder="เช่น Chaiss, Chang, Smart TV 55 นิ้ว" required maxlength="30">
+                            </div>
+                        </div>
+
+                        <!-- หมวดหมู่ -->
+                        <div class="col-md-3">
+                            <label for="categoryId" class="form-label">หมวดหมู่ (Category) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-grid-fill"></i></span>
+                                <select class="form-select" id="categoryId" required>
+                                    <option value="" disabled selected>-- เลือกหมวดหมู่ --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- ผู้จำหน่าย -->
+                        <div class="col-md-3">
+                            <label for="supplierId" class="form-label">ผู้จัดจำหน่าย (Supplier) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                <select class="form-select" id="supplierId" required>
+                                    <option value="" disabled selected>-- เลือกผู้จำหน่าย --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- หน่วยนับ -->
+                        <div class="col-md-6">
+                            <label for="unit" class="form-label">หน่วยนับ (Unit) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                <input type="text" class="form-control" id="unit"
+                                       placeholder="เช่น 10 boxes x 20 bags, 24 - 12 oz bottles, กล่อง, ชิ้น" required maxlength="30">
+                            </div>
+                        </div>
+
+                        <!-- ราคา -->
+                        <div class="col-md-6">
+                            <label for="price" class="form-label">ราคาต่อหน่วย (฿) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">฿</span>
+                                <input type="number" class="form-control" id="price"
+                                       placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-submit-custom px-4" id="btnSubmit">
+                            <i class="bi bi-cloud-arrow-up-fill me-2" id="btnSubmitIcon"></i>
+                            <span id="btnSubmitText">บันทึกข้อมูลสินค้า</span>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" id="btnReset">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>ล้างฟอร์ม
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div> <!-- /.container -->
+
+    <!-- ═══════════════════ Modal: ยืนยันลบ ═══════════════════ -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-body text-center p-4">
+                    <div class="text-danger mb-3">
+                        <i class="bi bi-exclamation-triangle-fill display-1"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">ยืนยันการลบ</h4>
+                    <p class="text-muted mb-3">
+                        คุณต้องการลบสินค้า
+                        <strong class="text-danger" id="deleteProductName"></strong>
+                        ใช่หรือไม่?
+                    </p>
+                    <input type="hidden" id="deleteProductId">
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-1"></i>ยกเลิก
+                        </button>
+                        <button type="button" class="btn btn-danger px-4" id="btnConfirmDelete" onclick="deleteProduct()">
+                            <i class="bi bi-trash3 me-1"></i>ยืนยันลบ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ Modal: สำเร็จ ═══════════════════ -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4 rounded-4 border-0 shadow">
+                <div class="modal-body">
+                    <div class="text-success mb-3 success-icon-pulse">
+                        <i class="bi bi-check-circle-fill display-1"></i>
+                    </div>
+                    <h4 class="modal-title fw-bold mb-2" id="successModalLabel">ดำเนินการสำเร็จ!</h4>
+                    <p class="text-muted mb-3" id="successMessageText">
+                        บันทึกข้อมูลสินค้าเรียบร้อยแล้ว
+                    </p>
+
+                    <div class="bg-light p-3 rounded-3 text-start small mb-4 border" id="insertedDetails">
+                        <!-- Injected via JS -->
+                    </div>
+
+                    <button type="button" class="btn btn-success px-5 py-2 rounded-3 fw-medium" data-bs-dismiss="modal">
+                        <i class="bi bi-check-lg me-1"></i>ตกลง (OK)
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-3 fw-medium ms-2" data-bs-dismiss="modal" id="modalResetBtn">
+                        <i class="bi bi-plus-lg me-1"></i>เพิ่มสินค้าใหม่
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════ Scripts ═══════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/loaddata.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/form.js"></script>
+
+</body>
+</html>

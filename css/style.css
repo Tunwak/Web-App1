@@ -1,0 +1,199 @@
+/* ══════════════════════════════════════════════
+   style.css — Custom Styles เสริม Bootstrap 5
+   ══════════════════════════════════════════════ */
+
+/* ---------- Base ---------- */
+:root {
+    --primary:   #0d6efd;
+    --primary-d: #0a58ca;
+    --success:   #198754;
+    --success-d: #146c43;
+    --danger:    #dc3545;
+    --warning:   #ffc107;
+    --bg:        #f0f2f5;
+    --card-bg:   #ffffff;
+    --text:      #212529;
+    --text-muted:#6c757d;
+    --shadow:    0 8px 30px rgba(0, 0, 0, 0.08);
+    --radius:    1rem;
+}
+
+body {
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* ---------- Navbar ---------- */
+.navbar-custom {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-d) 100%);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.20);
+}
+
+/* ---------- Cards ---------- */
+.card-main {
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    background-color: var(--card-bg);
+}
+
+.card-header-custom {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-d) 100%);
+    color: #fff;
+    padding: 1.25rem 1.5rem;
+}
+
+.card-header-success {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-d) 100%);
+    color: #fff;
+    padding: 1.25rem 1.5rem;
+}
+
+/* ---------- Table ---------- */
+.table-products th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.table-products td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.table-products tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.table-products tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.04);
+}
+
+/* ---------- Buttons ---------- */
+.btn-action {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.82rem;
+    border-radius: 0.4rem;
+    transition: all 0.2s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+.btn-submit-custom {
+    background: linear-gradient(135deg, var(--success) 0%, var(--success-d) 100%);
+    border: none;
+    padding: 0.7rem 1.5rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    color: #fff;
+    transition: all 0.25s ease;
+}
+
+.btn-submit-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(25, 135, 84, 0.3);
+    color: #fff;
+}
+
+/* ---------- Search ---------- */
+.search-box {
+    max-width: 400px;
+}
+
+.search-box .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* ---------- Form ---------- */
+.form-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    color: var(--success);
+}
+
+/* ---------- Error styling for form fields ---------- */
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: var(--danger);
+}
+
+.invalid-feedback {
+    font-size: 0.82rem;
+}
+
+/* ---------- Modal Success Icon ---------- */
+.success-icon-pulse {
+    animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+    0%   { transform: scale(0.5); opacity: 0; }
+    60%  { transform: scale(1.15); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ---------- Toast custom ---------- */
+.toast-container-custom {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+}
+
+/* ---------- Badge ---------- */
+.badge-stock-ok {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.badge-stock-low {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.badge-stock-out {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+/* ---------- Empty State ---------- */
+.empty-state {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    .search-box {
+        max-width: 100%;
+    }
+}

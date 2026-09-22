@@ -1,0 +1,8 @@
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# ส่งทุก request ไปที่ index.php พร้อมแปลง path เป็น query string
+# ตัวอย่าง: /api/products/5  ->  index.php?__route=products/5
+RewriteRule ^(.*)$ index.php?__route=$1 [QSA,L]
