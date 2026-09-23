@@ -15,13 +15,23 @@
  */
 
 // 1. Support either a single MySQL URL or the older environment-variable set
-$mysqlUrl = getenv('MYSQL_URL') ?: getenv('DATABASE_URL');
+$env = function (array $names, $fallback = null) {
+    foreach ($names as $name) {
+        $value = getenv($name);
+        if ($value !== false && $value !== null && $value !== '') {
+            return $value;
+        }
+    }
+    return $fallback;
+};
 
-$servername = getenv('MYSQLHOST') ?: (getenv('DB_HOST') ?: 'localhost');
-$port       = getenv('MYSQLPORT') ?: (getenv('DB_PORT') ?: 3306);
-$username   = getenv('MYSQLUSER') ?: (getenv('DB_USER') ?: 'root');
-$password   = getenv('MYSQLPASSWORD') ?: (getenv('DB_PASS') ?: 'root');
-$dbname     = getenv('MYSQLDATABASE') ?: (getenv('DB_NAME') ?: 'db_northwind');
+$mysqlUrl = $env(['MYSQL_URL', 'DATABASE_URL']);
+
+$servername = $env(['MYSQLHOST', 'MYSQL_HOST', 'DB_HOST'], 'localhost');
+$port       = $env(['MYSQLPORT', 'MYSQL_PORT', 'DB_PORT'], 3306);
+$username   = $env(['MYSQLUSER', 'MYSQL_USER', 'DB_USER'], 'root');
+$password   = $env(['MYSQLPASSWORD', 'MYSQL_PASSWORD', 'DB_PASS'], 'root');
+$dbname     = $env(['MYSQLDATABASE', 'MYSQL_DATABASE', 'DB_NAME'], 'db_northwind');
 
 if ($mysqlUrl) {
     $parsedUrl = parse_url($mysqlUrl);
