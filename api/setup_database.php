@@ -9,6 +9,28 @@
  * - If no upload provided, will try to load file from repository path
  */
 
+$mysqlUrl = getenv('MYSQL_URL') ?: getenv('DATABASE_URL');
+
+$servername = getenv('MYSQLHOST') ?: (getenv('DB_HOST') ?: 'localhost');
+$port       = getenv('MYSQLPORT') ?: (getenv('DB_PORT') ?: 3306);
+$username   = getenv('MYSQLUSER') ?: (getenv('DB_USER') ?: 'root');
+$password   = getenv('MYSQLPASSWORD') ?: (getenv('DB_PASS') ?: 'root');
+$dbname     = getenv('MYSQLDATABASE') ?: (getenv('DB_NAME') ?: 'db_northwind');
+
+if ($mysqlUrl) {
+    $parsedUrl = parse_url($mysqlUrl);
+    if ($parsedUrl && !empty($parsedUrl['host'])) {
+        $servername = $parsedUrl['host'];
+        $port       = $parsedUrl['port'] ?? $port;
+        $username   = $parsedUrl['user'] ?? $username;
+        $password   = $parsedUrl['pass'] ?? $password;
+        $dbname     = ltrim($parsedUrl['path'] ?? '', '/') ?: $dbname;
+    }
+}
+
+$dsnNoDb = "mysql:host={$servername};port={$port};charset=utf8mb4";
+$dsnWithDb = "mysql:host={$servername};port={$port};dbname={$dbname};charset=utf8mb4";
+
 require_once __DIR__ . '/../inc/connDB.php';
 
 // If visited via browser (GET) show a minimal upload form
@@ -18,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     echo '<h2>Import dbNorthwind.sql</h2>';
     echo '<p>เลือกไฟล์ SQL แล้วกด Import เพื่อใส่ตัวอย่างข้อมูลลงฐานข้อมูล.</p>';
     echo '<form method="post" enctype="multipart/form-data">';
-    echo '<input type="file" name="sqlfile" accept=".sql" required>'; 
+    echo '<input type="file" name="sqlfile" accept=".sql" required>';
     echo '<button type="submit">Import</button>';
     echo '</form>';
     echo '<hr><p>หรือเรียกสคริปต์โดยตรงถ้าวางไฟล์ไว้ในโฟลเดอร์โปรเจกต์.</p>';
@@ -32,14 +54,12 @@ try {
     $uploaded = false;
     $sql = '';
 
-    // 1) If file uploaded via form, use it
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_FILES['sqlfile']) && $_FILES['sqlfile']['error'] === UPLOAD_ERR_OK) {
         $tmpPath = $_FILES['sqlfile']['tmp_name'];
         $sql = file_get_contents($tmpPath);
         $uploaded = true;
     }
 
-    // 2) If no upload, try repository path (legacy behavior)
     if (!$uploaded) {
         $sqlFile = __DIR__ . '/../../dbNorthwind.sql';
         if (!file_exists($sqlFile)) {
@@ -57,10 +77,18 @@ try {
         exit;
     }
 
-    // Execute multi-query SQL. PDO::exec can execute semicolon-separated statements
+    $dbCheck = new PDO($dsnNoDb, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
+
+    $dbCheck->exec("CREATE DATABASE IF NOT EXISTS `{$dbname}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $conn = new PDO($dsnWithDb, $username, $password, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    ]);
     $conn->exec($sql);
 
-    // Verify products table exists and count records
     $stmt = $conn->query("SELECT COUNT(*) AS total FROM tb_products");
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
 

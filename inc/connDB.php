@@ -17,36 +17,22 @@
 // 1. Support either a single MySQL URL or the older environment-variable set
 $mysqlUrl = getenv('MYSQL_URL') ?: getenv('DATABASE_URL');
 
+$servername = getenv('MYSQLHOST') ?: (getenv('DB_HOST') ?: 'localhost');
+$port       = getenv('MYSQLPORT') ?: (getenv('DB_PORT') ?: 3306);
+$username   = getenv('MYSQLUSER') ?: (getenv('DB_USER') ?: 'root');
+$password   = getenv('MYSQLPASSWORD') ?: (getenv('DB_PASS') ?: 'root');
+$dbname     = getenv('MYSQLDATABASE') ?: (getenv('DB_NAME') ?: 'db_northwind');
+
 if ($mysqlUrl) {
     $parsedUrl = parse_url($mysqlUrl);
 
-    if ($parsedUrl && isset($parsedUrl['host'])) {
+    if ($parsedUrl && !empty($parsedUrl['host'])) {
         $servername = $parsedUrl['host'];
-        $port       = $parsedUrl['port'] ?? 3306;
-        $username   = $parsedUrl['user'] ?? getenv('MYSQLUSER') ?: (getenv('DB_USER') ?: 'root');
-        $password   = $parsedUrl['pass'] ?? getenv('MYSQLPASSWORD') ?: (getenv('DB_PASS') ?: 'root');
-        $dbname     = ltrim($parsedUrl['path'] ?? '', '/') ?: (getenv('MYSQLDATABASE') ?: (getenv('DB_NAME') ?: 'db_northwind'));
+        $port       = $parsedUrl['port'] ?? $port;
+        $username   = $parsedUrl['user'] ?? $username;
+        $password   = $parsedUrl['pass'] ?? $password;
+        $dbname     = ltrim($parsedUrl['path'] ?? '', '/') ?: $dbname;
     }
-}
-
-if (empty($servername)) {
-    $servername = getenv('MYSQLHOST') ?: (getenv('DB_HOST') ?: 'localhost');
-}
-
-if (empty($port)) {
-    $port = getenv('MYSQLPORT') ?: (getenv('DB_PORT') ?: 3306);
-}
-
-if (empty($username)) {
-    $username = getenv('MYSQLUSER') ?: (getenv('DB_USER') ?: 'root');
-}
-
-if (empty($password)) {
-    $password = getenv('MYSQLPASSWORD') ?: (getenv('DB_PASS') ?: 'root');
-}
-
-if (empty($dbname)) {
-    $dbname = getenv('MYSQLDATABASE') ?: (getenv('DB_NAME') ?: 'db_northwind');
 }
 
 try {
