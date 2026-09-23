@@ -145,17 +145,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(payload)
             });
 
-            const result = await response.json();
+            const result = await parseJsonSafe(response);
 
             // ตรวจสอบผลลัพธ์
-            if (!response.ok || !result.success) {
-                // หากมี Error จากฝั่ง Server Validation (HTTP 422)
-                if (result.errors && Array.isArray(result.errors)) {
+            if (!response.ok) {
+                if (result && result.errors && Array.isArray(result.errors)) {
                     showServerErrors(result.errors);
-                } else {
-                    throw new Error(result.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+                    return;
                 }
-                return;
+                throw new Error(result?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            }
+            if (!result || !result.success) {
+                if (result && result.errors && Array.isArray(result.errors)) {
+                    showServerErrors(result.errors);
+                    return;
+                }
+                throw new Error(result?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล');
             }
 
             // แจ้งเตือนเมื่อสำเร็จ

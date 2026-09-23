@@ -36,10 +36,14 @@ async function loadProducts(search = '') {
         if (search) url += `?search=${encodeURIComponent(search)}`;
 
         const response = await fetch(url);
-        const result   = await response.json();
+        const result   = await parseJsonSafe(response);
 
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'ไม่สามารถโหลดข้อมูลสินค้าได้');
+        if (!response.ok) {
+            const msg = result?.message || 'ไม่สามารถโหลดข้อมูลสินค้าได้';
+            throw new Error(msg);
+        }
+        if (!result || !result.success) {
+            throw new Error(result?.message || 'ไม่สามารถโหลดข้อมูลสินค้าได้');
         }
 
         const products = result.data || [];
@@ -96,10 +100,13 @@ async function loadProducts(search = '') {
 async function editProduct(id) {
     try {
         const response = await fetch(`${API_BASE}/products/${id}`);
-        const result   = await response.json();
+        const result   = await parseJsonSafe(response);
 
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'ไม่สามารถดึงข้อมูลสินค้านี้ได้');
+        if (!response.ok) {
+            throw new Error(result?.message || 'ไม่สามารถดึงข้อมูลสินค้านี้ได้');
+        }
+        if (!result || !result.success) {
+            throw new Error(result?.message || 'ไม่สามารถดึงข้อมูลสินค้านี้ได้');
         }
 
         const p = result.data;
@@ -152,10 +159,13 @@ async function deleteProduct() {
         const response = await fetch(`${API_BASE}/products/${id}`, {
             method: 'DELETE'
         });
-        const result = await response.json();
+        const result = await parseJsonSafe(response);
 
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || 'ไม่สามารถลบสินค้าได้');
+        if (!response.ok) {
+            throw new Error(result?.message || 'ไม่สามารถลบสินค้าได้');
+        }
+        if (!result || !result.success) {
+            throw new Error(result?.message || 'ไม่สามารถลบสินค้าได้');
         }
 
         // ปิด Modal ยืนยัน

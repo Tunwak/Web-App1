@@ -8,10 +8,15 @@ async function loadSelectOptions(url, selectId, placeholderText) {
 
     try {
         const response = await fetch(url);
-        const result = await response.json();
+        const result = await parseJsonSafe(response);
 
-        if (!response.ok || !result.success) {
-            throw new Error(result.message || `HTTP ${response.status}`);
+        if (!response.ok) {
+            // Try to use message from parsed body if available
+            const msg = result?.message || `HTTP ${response.status}`;
+            throw new Error(msg);
+        }
+        if (!result || !result.success) {
+            throw new Error(result?.message || 'ไม่สามารถโหลดข้อมูลได้');
         }
 
         selectEl.innerHTML = '';
