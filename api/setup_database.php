@@ -24,12 +24,12 @@ $env = function (array $names, $fallback = null) {
     return $fallback;
 };
 
-$mysqlUrl = $env(['MYSQL_URL', 'DATABASE_URL']);
+$mysqlUrl = $env(['MYSQL_URL', 'MYSQL_PUBLIC_URL', 'DATABASE_URL']);
 
 $servername = $env(['MYSQLHOST', 'MYSQL_HOST', 'DB_HOST'], 'mysql.railway.internal');
 $port       = $env(['MYSQLPORT', 'MYSQL_PORT', 'DB_PORT'], 3306);
-$username   = $env(['MYSQLUSER', 'MYSQL_USER', 'DB_USER'], 'root');
-$password   = $env(['MYSQLPASSWORD', 'MYSQL_PASSWORD', 'DB_PASS'], 'CrgcBBXtlSBeZwyFcXbEwOvWUzpRlNSf');
+$username   = $env(['MYSQLUSER', 'MYSQL_USER', 'DB_USER', 'MYSQL_USERNAME'], 'root');
+$password   = $env(['MYSQLPASSWORD', 'MYSQL_PASSWORD', 'DB_PASS', 'MYSQL_ROOT_PASSWORD'], 'root');
 $dbname     = $env(['MYSQLDATABASE', 'MYSQL_DATABASE', 'DB_NAME'], 'railway');
 
 if ($mysqlUrl) {
@@ -45,6 +45,62 @@ if ($mysqlUrl) {
 
 $dsnNoDb = "mysql:host={$servername};port={$port};charset=utf8mb4";
 $dsnWithDb = "mysql:host={$servername};port={$port};dbname={$dbname};charset=utf8mb4";
+
+function buildFallbackNorthwindSql(): string
+{
+    return <<<'SQL'
+CREATE TABLE IF NOT EXISTS `tb_categories` (
+    `i_CategoryID` INT NOT NULL AUTO_INCREMENT,
+    `c_CategoryName` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`i_CategoryID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_suppliers` (
+    `i_SupplierID` INT NOT NULL AUTO_INCREMENT,
+    `c_SupplierName` VARCHAR(255) NOT NULL,
+    PRIMARY KEY (`i_SupplierID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `tb_products` (
+    `i_ProductID` INT NOT NULL AUTO_INCREMENT,
+    `c_ProductName` VARCHAR(255) NOT NULL,
+    `i_SupplierID` INT NOT NULL,
+    `i_CategoryID` INT NOT NULL,
+    `c_Unit` VARCHAR(255) NOT NULL,
+    `i_Price` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    PRIMARY KEY (`i_ProductID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO `tb_categories` (`i_CategoryID`, `c_CategoryName`) VALUES
+(1, 'Beverages'),
+(2, 'Condiments'),
+(3, 'Confections'),
+(4, 'Dairy Products'),
+(5, 'Grains/Cereals'),
+(6, 'Meat/Poultry'),
+(7, 'Produce'),
+(8, 'Seafood');
+
+INSERT IGNORE INTO `tb_suppliers` (`i_SupplierID`, `c_SupplierName`) VALUES
+(1, 'Exotic Liquids'),
+(2, 'New Orleans Cajun Delights'),
+(3, 'Grandma Kelly''s Homestead'),
+(4, 'Tokyo Traders'),
+(5, 'Cooperativa de Quesos ''Las Cabras''');
+
+INSERT IGNORE INTO `tb_products` (`i_ProductID`, `c_ProductName`, `i_SupplierID`, `i_CategoryID`, `c_Unit`, `i_Price`) VALUES
+(1, 'Chai', 1, 1, '10 boxes x 20 bags', 18.00),
+(2, 'Chang', 1, 1, '24 - 12 oz bottles', 19.00),
+(3, 'Aniseed Syrup', 1, 2, '12 - 550 ml bottles', 10.00),
+(4, 'Chef Anton''s Cajun Seasoning', 2, 2, '48 - 6 oz jars', 22.00),
+(5, 'Chef Anton''s Gumbo Mix', 2, 2, '36 boxes', 21.35),
+(6, 'Grandma''s Boysenberry Spread', 3, 2, '12 - 8 oz jars', 25.00),
+(7, 'Uncle Bob''s Organic Dried Pears', 3, 7, '12 - 1 lb pkgs.', 30.00),
+(8, 'Northwoods Cranberry Sauce', 3, 2, '12 - 12 oz jars', 40.00),
+(9, 'Mishi Kobe Niku', 4, 6, '18 - 500 g pkgs.', 97.00),
+(10, 'Ikura', 4, 8, '12 - 200 ml jars', 31.00);
+SQL;
+}
 
 require_once __DIR__ . '/../inc/connDB.php';
 
@@ -76,15 +132,25 @@ try {
     }
 
     if (!$uploaded) {
-        $sqlFile = __DIR__ . '/../../dbNorthwind.sql';
-        if (!file_exists($sqlFile)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'File dbNorthwind.sql not found at ' . $sqlFile . ' and no file was uploaded.'
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
+        $sqlFileCandidates = [
+            __DIR__ . '/../dbNorthwind.sql',
+            __DIR__ . '/dbNorthwind.sql',
+            __DIR__ . '/../../dbNorthwind.sql',
+        ];
+
+        $sqlFile = null;
+        foreach ($sqlFileCandidates as $candidate) {
+            if (file_exists($candidate)) {
+                $sqlFile = $candidate;
+                break;
+            }
         }
-        $sql = file_get_contents($sqlFile);
+
+        if ($sqlFile !== null) {
+            $sql = file_get_contents($sqlFile);
+        } else {
+            $sql = buildFallbackNorthwindSql();
+        }
     }
 
     if (trim($sql) === '') {

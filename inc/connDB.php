@@ -25,12 +25,12 @@ $env = function (array $names, $fallback = null) {
     return $fallback;
 };
 
-$mysqlUrl = $env(['MYSQL_URL', 'DATABASE_URL']);
+$mysqlUrl = $env(['MYSQL_URL', 'MYSQL_PUBLIC_URL', 'DATABASE_URL']);
 
 $servername = $env(['MYSQLHOST', 'MYSQL_HOST', 'DB_HOST'], 'mysql.railway.internal');
 $port       = $env(['MYSQLPORT', 'MYSQL_PORT', 'DB_PORT'], 3306);
-$username   = $env(['MYSQLUSER', 'MYSQL_USER', 'DB_USER'], 'root');
-$password   = $env(['MYSQLPASSWORD', 'MYSQL_PASSWORD', 'DB_PASS'], 'CrgcBBXtlSBeZwyFcXbEwOvWUzpRlNSf');
+$username   = $env(['MYSQLUSER', 'MYSQL_USER', 'DB_USER', 'MYSQL_USERNAME'], 'root');
+$password   = $env(['MYSQLPASSWORD', 'MYSQL_PASSWORD', 'DB_PASS', 'MYSQL_ROOT_PASSWORD'], 'root');
 $dbname     = $env(['MYSQLDATABASE', 'MYSQL_DATABASE', 'DB_NAME'], 'railway');
 
 if ($mysqlUrl) {
